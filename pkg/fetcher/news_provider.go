@@ -3,7 +3,6 @@ package fetcher
 import (
 	"github.com/practical-go/go-kyrylo-api/pkg/domain"
 	"io/ioutil"
-	"math/rand"
 	"net/http"
 )
 
@@ -12,29 +11,33 @@ type NewsFetcher interface {
 }
 
 type NewsProvider struct {
-	fetchers []NewsFetcher
+	catFactsnewFetcher NewsFetcher
+	spaceflightNewsFetcher NewsFetcher
 }
 
-func NewNewsProvider(fetchers []NewsFetcher) NewsFetcher {
-	return &NewsProvider{fetchers: fetchers}
+func NewNewsProvider(catFactsnewFetcher NewsFetcher, spaceflightNewsFetcher NewsFetcher) NewsFetcher {
+	return &NewsProvider{catFactsnewFetcher, spaceflightNewsFetcher}
 }
 
 func (n *NewsProvider) GetNews() ([]*domain.News, error) {
 	result := []*domain.News{}
-	for _, fetcher := range n.fetchers {
-		news, err := fetcher.GetNews()
-		if err != nil {
-			return nil, err
-		}
 
-		result = append(result, news...)
+	spaceNews, err := n.spaceflightNewsFetcher.GetNews()
+	if err != nil {
+		return nil, err
 	}
 
-	rand.Shuffle(len(result), func(i, j int) {
-		result[i], result[j] = result[j], result[i]
-	})
+	catNews, err := n.catFactsnewFetcher.GetNews()
+	if err != nil {
+		return nil, err
+	}
 
-	return result, nil
+	for i := 0; len(result) < 10; i++ {
+		result = append(result, spaceNews[i:i+2]...)
+		result = append(result, catNews[i])
+	}
+
+	return result[0:10], nil
 }
 
 func doGetRequest(url string) ([]byte, error) {

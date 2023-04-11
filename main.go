@@ -9,10 +9,10 @@ import (
 )
 
 func handleNews(w http.ResponseWriter, _ *http.Request) {
-	c := fetcher.NewNewsProvider([]fetcher.NewsFetcher{
+	c := fetcher.NewNewsProvider(
 		fetcher.NewCatFactsNewsFetcher(),
 		fetcher.NewSpaceflightNewsFetcher(),
-	})
+	)
 	news, err := c.GetNews()
 
 	w.Header().Set("Content-Type", "application/json")
