@@ -19,21 +19,21 @@ func (f *CatFactsNewsFetcher) GetNews() ([]*domain.News, error) {
 		return nil, err
 	}
 
-	type catFactsNews struct {
+	var catFactsNewsResult []struct {
 		Text string `json:"text"`
 	}
-	result := []catFactsNews{}
-	err = json.Unmarshal(body, &result)
+
+	err = json.Unmarshal(body, &catFactsNewsResult)
 	if err != nil {
 		return nil, err
 	}
 
 	news := []*domain.News{}
-	for _, obj := range result {
-		if obj.Text == "" {
+	for _, catFact := range catFactsNewsResult {
+		if catFact.Text == "" {
 			continue
 		}
-		news = append(news, domain.NewNews("Cat Facts 😼", obj.Text))
+		news = append(news, &domain.News{Title: "Cat Facts 😼", Summary: catFact.Text})
 	}
 
 	return news, nil

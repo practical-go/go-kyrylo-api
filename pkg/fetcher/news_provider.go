@@ -11,12 +11,12 @@ type NewsFetcher interface {
 }
 
 type NewsProvider struct {
-	catFactsnewFetcher NewsFetcher
+	catFactsNewsFetcher    NewsFetcher
 	spaceflightNewsFetcher NewsFetcher
 }
 
-func NewNewsProvider(catFactsnewFetcher NewsFetcher, spaceflightNewsFetcher NewsFetcher) NewsFetcher {
-	return &NewsProvider{catFactsnewFetcher, spaceflightNewsFetcher}
+func NewNewsProvider(catFactsNewsFetcher NewsFetcher, spaceflightNewsFetcher NewsFetcher) NewsFetcher {
+	return &NewsProvider{catFactsNewsFetcher, spaceflightNewsFetcher}
 }
 
 func (n *NewsProvider) GetNews() ([]*domain.News, error) {
@@ -27,14 +27,18 @@ func (n *NewsProvider) GetNews() ([]*domain.News, error) {
 		return nil, err
 	}
 
-	catNews, err := n.catFactsnewFetcher.GetNews()
+	catNews, err := n.catFactsNewsFetcher.GetNews()
 	if err != nil {
 		return nil, err
 	}
 
 	for i := 0; len(result) < 10; i++ {
-		result = append(result, spaceNews[i:i+2]...)
-		result = append(result, catNews[i])
+		if len(spaceNews) > i+2 {
+			result = append(result, spaceNews[i:i+2]...)
+		}
+		if len(catNews) > i {
+			result = append(result, catNews[i])
+		}
 	}
 
 	return result[0:10], nil

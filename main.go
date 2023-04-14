@@ -8,27 +8,13 @@ import (
 	"net/http"
 )
 
-func handleNews(w http.ResponseWriter, _ *http.Request) {
-	c := fetcher.NewNewsProvider(
+var newsFetcher fetcher.NewsFetcher
+
+func init() {
+	newsFetcher = fetcher.NewNewsProvider(
 		fetcher.NewCatFactsNewsFetcher(),
 		fetcher.NewSpaceflightNewsFetcher(),
 	)
-	news, err := c.GetNews()
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "GET")
-
-	if err != nil {
-		resp, _ := json.Marshal(domain.ErrorResponse{Error: err.Error()})
-		w.Write(resp)
-		return
-	}
-
-	resp, _ := json.Marshal(news)
-	w.Write(resp)
-
-	return
 }
 
 func main() {
@@ -39,4 +25,23 @@ func main() {
 	http.HandleFunc("/news", handleNews)
 
 	http.ListenAndServe(":8080", nil)
+}
+
+func handleNews(w http.ResponseWriter, _ *http.Request) {
+	news, err := newsFetcher.GetNews()
+
+	if err != nil {
+		resp, _ := json.Marshal(domain.ErrorResponse{Error: err.Error()})
+		w.Write(resp)
+		return
+	}
+
+	resp, _ := json.Marshal(news)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET")
+	w.Write(resp)
+
+	return
 }

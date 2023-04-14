@@ -19,21 +19,21 @@ func (f *SpaceflightNewsFetcher) GetNews() ([]*domain.News, error) {
 		return nil, err
 	}
 
-	type spaceflightResultObject struct {
+	spaceFlightNewsResult := struct {
 		Results []struct {
 			Title   string `json:"title"`
 			Summary string `json:"summary"`
 		} `json:"results"`
-	}
-	result := spaceflightResultObject{}
-	err = json.Unmarshal(body, &result)
+	}{}
+
+	err = json.Unmarshal(body, &spaceFlightNewsResult)
 	if err != nil {
 		return nil, err
 	}
 
-	news := []*domain.News{}
-	for _, res := range result.Results {
-		news = append(news, domain.NewNews(res.Title, res.Summary))
+	var news []*domain.News
+	for _, spaceFlightNews := range spaceFlightNewsResult.Results {
+		news = append(news, &domain.News{Title: spaceFlightNews.Title, Summary: spaceFlightNews.Summary})
 	}
 
 	return news, nil
