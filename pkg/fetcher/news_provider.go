@@ -1,13 +1,15 @@
 package fetcher
 
 import (
-	"github.com/practical-go/go-kyrylo-api/pkg/domain"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/practical-go/go-kyrylo-api/pkg/domain"
+	"github.com/practical-go/go-kyrylo-api/pkg/input"
 )
 
 type NewsFetcher interface {
-	GetNews() ([]*domain.News, error)
+	GetNews(*input.GetNewsRequest) ([]*domain.News, error)
 }
 
 type NewsProvider struct {
@@ -19,29 +21,50 @@ func NewNewsProvider(catFactsNewsFetcher NewsFetcher, spaceflightNewsFetcher New
 	return &NewsProvider{catFactsNewsFetcher, spaceflightNewsFetcher}
 }
 
-func (n *NewsProvider) GetNews() ([]*domain.News, error) {
+func (n *NewsProvider) GetNews(req *input.GetNewsRequest) ([]*domain.News, error) {
 	result := []*domain.News{}
 
-	spaceNews, err := n.spaceflightNewsFetcher.GetNews()
-	if err != nil {
-		return nil, err
-	}
+	var spaceNews []*domain.News
+	var catNews []*domain.News
+	var err error
 
-	catNews, err := n.catFactsNewsFetcher.GetNews()
-	if err != nil {
-		return nil, err
-	}
-
-	for i := 0; len(result) < 10; i++ {
-		if len(spaceNews) > i+2 {
-			result = append(result, spaceNews[i:i+2]...)
-		}
-		if len(catNews) > i {
-			result = append(result, catNews[i])
+	if req.Tag == input.SpaceflightNewsTag {
+		spaceNews, err = n.spaceflightNewsFetcher.GetNews(req)
+		if err != nil {
+			return nil, err
 		}
 	}
 
-	return result[0:10], nil
+	if req.Tag == input.CatFactsTag {
+		catNews, err = n.catFactsNewsFetcher.GetNews(req)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if req.Tag == input.BothTag {
+		catNews, err = n.catFactsNewsFetcher.GetNews(req)
+		if err != nil {
+			return nil, err
+		}
+
+		spaceNews, err = n.spaceflightNewsFetcher.GetNews(req)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	for i, sn, cn := 1, 0, 0; len(result) <= req.Limit; i++ {
+		if i%3 > 0 && len(spaceNews) > sn {
+			result = append(result, spaceNews[sn])
+			sn++
+		} else if i%3 == 0 && len(catNews) > cn {
+			result = append(result, catNews[cn])
+			cn++
+		}
+	}
+
+	return result[0:req.Limit], nil
 }
 
 func doGetRequest(url string) ([]byte, error) {

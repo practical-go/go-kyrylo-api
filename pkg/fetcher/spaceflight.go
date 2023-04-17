@@ -2,19 +2,21 @@ package fetcher
 
 import (
 	"encoding/json"
+	"fmt"
+
 	"github.com/practical-go/go-kyrylo-api/pkg/domain"
+	"github.com/practical-go/go-kyrylo-api/pkg/input"
 )
 
 type SpaceflightNewsFetcher struct {
-	url string
 }
 
 func NewSpaceflightNewsFetcher() NewsFetcher {
-	return &SpaceflightNewsFetcher{url: "https://api.spaceflightnewsapi.net/v4/articles/?limit=10"}
+	return &SpaceflightNewsFetcher{}
 }
 
-func (f *SpaceflightNewsFetcher) GetNews() ([]*domain.News, error) {
-	body, err := doGetRequest(f.url)
+func (f *SpaceflightNewsFetcher) GetNews(request *input.GetNewsRequest) ([]*domain.News, error) {
+	body, err := doGetRequest(fmt.Sprintf("https://api.spaceflightnewsapi.net/v4/articles/?limit=%d", request.Limit+1))
 	if err != nil {
 		return nil, err
 	}

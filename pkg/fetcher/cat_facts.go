@@ -2,7 +2,10 @@ package fetcher
 
 import (
 	"encoding/json"
+	"fmt"
+
 	"github.com/practical-go/go-kyrylo-api/pkg/domain"
+	"github.com/practical-go/go-kyrylo-api/pkg/input"
 )
 
 type CatFactsNewsFetcher struct {
@@ -10,11 +13,11 @@ type CatFactsNewsFetcher struct {
 }
 
 func NewCatFactsNewsFetcher() NewsFetcher {
-	return &CatFactsNewsFetcher{url: "https://cat-fact.herokuapp.com/facts/random?animal_type=cat&amount=10"}
+	return &CatFactsNewsFetcher{}
 }
 
-func (f *CatFactsNewsFetcher) GetNews() ([]*domain.News, error) {
-	body, err := doGetRequest(f.url)
+func (f *CatFactsNewsFetcher) GetNews(request *input.GetNewsRequest) ([]*domain.News, error) {
+	body, err := doGetRequest(fmt.Sprintf("https://cat-fact.herokuapp.com/facts/random?animal_type=cat&amount=%d", request.Limit+1))
 	if err != nil {
 		return nil, err
 	}

@@ -3,9 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"strings"
+
 	"github.com/practical-go/go-kyrylo-api/pkg/domain"
 	"github.com/practical-go/go-kyrylo-api/pkg/fetcher"
-	"net/http"
+	"github.com/practical-go/go-kyrylo-api/pkg/input"
 )
 
 var newsFetcher fetcher.NewsFetcher
@@ -27,8 +30,22 @@ func main() {
 	http.ListenAndServe(":8080", nil)
 }
 
-func handleNews(w http.ResponseWriter, _ *http.Request) {
-	news, err := newsFetcher.GetNews()
+func handleNews(w http.ResponseWriter, r *http.Request) {
+	inputReq := input.NewGetNewsRequest(r)
+
+	eTag := fmt.Sprintf(`"%d_%s"`, inputReq.Limit, inputReq.Tag)
+
+	w.Header().Set("Etag", eTag)
+	w.Header().Set("Cache-Control", "max-age=60")
+
+	if match := r.Header.Get("If-None-Match"); match != "" {
+		if strings.Contains(match, eTag) {
+			w.WriteHeader(http.StatusNotModified)
+			return
+		}
+	}
+
+	news, err := newsFetcher.GetNews(inputReq)
 
 	if err != nil {
 		resp, _ := json.Marshal(domain.ErrorResponse{Error: err.Error()})
