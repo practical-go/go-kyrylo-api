@@ -1,19 +1,16 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"github.com/practical-go/go-kyrylo-api/pkg/domain"
-	"github.com/practical-go/go-kyrylo-api/pkg/fetcher"
 	"net/http"
 )
 
-var newsFetcher fetcher.NewsFetcher
+var newsFetcher NewsFetcher
 
 func init() {
-	newsFetcher = fetcher.NewNewsProvider(
-		fetcher.NewCatFactsNewsFetcher(),
-		fetcher.NewSpaceflightNewsFetcher(),
+	newsFetcher = NewNewsProvider(
+		NewCatFactsNewsClient(),
+		NewSpaceflightNewsClient(),
 	)
 }
 
@@ -22,26 +19,7 @@ func main() {
 		fmt.Fprint(w, "Hello, World")
 	})
 
-	http.HandleFunc("/news", handleNews)
+	http.HandleFunc("/news", HandleNews(newsFetcher))
 
-	http.ListenAndServe(":8080", nil)
-}
-
-func handleNews(w http.ResponseWriter, _ *http.Request) {
-	news, err := newsFetcher.GetNews()
-
-	if err != nil {
-		resp, _ := json.Marshal(domain.ErrorResponse{Error: err.Error()})
-		w.Write(resp)
-		return
-	}
-
-	resp, _ := json.Marshal(news)
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "GET")
-	w.Write(resp)
-
-	return
+	http.ListenAndServe(":8081", nil)
 }
